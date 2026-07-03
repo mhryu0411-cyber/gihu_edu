@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# 2. 커스텀 CSS (사이드바 복구 + 그라데이션 + 디자인)
+# 2. 커스텀 CSS (사이드바 버튼 복구 + 배경색 변경 + 그라데이션)
 st.markdown("""
 <style>
     /* 폰트: 나눔고딕 전체 강제 적용 */
@@ -27,19 +27,22 @@ st.markdown("""
         font-family: 'Nanum Gothic', sans-serif !important;
     }
     
-    /* 상단 기본 헤더(깃허브 로고 등)만 완전히 숨기기 */
-    [data-testid="stHeader"] {
+    /* 📌 [수정 1] 사이드바 버튼은 살려두고, 우측 상단 Deploy, GitHub 로고(Toolbar)만 숨기기 */
+    [data-testid="stToolbar"] {
         display: none !important;
     }
+    
+    /* 📌 [수정 2] 메인 배경색을 완전 흰색이 아닌 아주 미세한 색상(#F8FAFC)으로 변경 */
+    [data-testid="stAppViewContainer"], .stApp {
+        background-color: #F8FAFC !important;
+    }
 
-    /* 📌 [해결 1] 사라진 사이드바 메뉴 무조건 다시 보이게 만들기 */
+    /* 📌 [수정 3] 사이드바 메뉴 강제 노출 및 그라데이션 배경 적용 */
     [data-testid="stSidebarNav"] {
         display: block !important; 
     }
-    
-    /* 📌 [해결 2] 사이드바에 고급스러운 그라데이션 배경 완벽 적용 */
-    [data-testid="stSidebar"], [data-testid="stSidebarContent"] {
-        background: linear-gradient(180deg, #EBF4FF 0%, #F3F4F6 100%) !important;
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #EAEFFF 0%, #F3F4F6 100%) !important;
     }
     
     /* 메인 타이틀 디자인 */
@@ -61,7 +64,7 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     
-    /* 카드형 컨테이너 보더 및 섀도우 마감 */
+    /* 카드형 컨테이너 보더 및 섀도우 마감 (카드는 완전 흰색 유지하여 대비감 주기) */
     div[data-testid="stContainer"] {
         border-radius: 14px !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
@@ -82,7 +85,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. 사이드바 내용 구성 (그라데이션 위에 얹어질 내용)
+# 3. 사이드바 내용 구성
 with st.sidebar:
     st.markdown("### 📖 기단(Air Mass)이란?")
     st.info("**기단(氣團)**은 수평 방향으로 기온·습도 등의 물리적 성질이 거의 균일한 대규모 공기 덩어리입니다. 발원지의 위도와 지표면 특성에 따라 분류됩니다.")
@@ -108,10 +111,10 @@ dom_info = AIRMASSES[dominant]
 st.markdown(f"### 🗓️ {month}월 ({season}) — 현재 가장 우세한 기단: {dom_info['emoji']} **{dominant}**")
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 6. 📌 [해결 3] 대시보드 3단 레이아웃 너비 전면 조정 (그래프 줄이고, 지도 대폭 확장)
+# 6. 대시보드 3단 레이아웃 (그래프 축소, 지도 확대)
 col_left, col_center, col_right = st.columns([0.9, 3.2, 1.3], gap="medium")
 
-# [좌측] 기단 세력 그래프 (너비 축소됨)
+# [좌측] 기단 세력 그래프
 with col_left:
     with st.container(border=True):
         st.markdown('<div class="section-header">📊 기단 점유율</div>', unsafe_allow_html=True)
@@ -121,7 +124,7 @@ with col_left:
             st.markdown(f"{info['emoji']} **{name}**")
             st.progress(s, text=f"{pct}%")
 
-# [중앙] Folium 지도 시각화 (너비 대폭 확장됨)
+# [중앙] Folium 지도 시각화
 with col_center:
     m = folium.Map(location=[36.3, 127.8], zoom_start=7, tiles="CartoDB positron", width="100%", height=530)
 
