@@ -4,6 +4,7 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 import plotly.graph_objects as go
+import os
 from utils.sample_data import (
     STATIONS, AIRMASSES, get_monthly_strength,
     get_sample_station_data, SEASON_NAMES,
@@ -18,8 +19,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 🚨 [수정 1] RecursionError (무한루프) 해결
-# 메인 화면 내용을 하나의 함수 안에 다 집어넣습니다.
+# 메인 화면 내용을 함수로 묶기
 # ==========================================
 def render_main_page():
     # 커스텀 CSS
@@ -29,6 +29,11 @@ def render_main_page():
         
         html, body, [data-testid="stAppViewContainer"], .stApp, p, h1, h2, h3, h4, h5, h6, li, span {
             font-family: 'Nanum Gothic', sans-serif;
+        }
+        
+        /* 🚨 [수정] 사이드바 버튼(왼쪽)은 살리고, 우측 상단 깃허브/Deploy 툴바만 숨기기 */
+        header [data-testid="stToolbar"] {
+            display: none !important;
         }
         
         [data-testid="stAppViewContainer"], .stApp {
@@ -57,7 +62,6 @@ def render_main_page():
             margin-bottom: 0.5rem;
         }
         
-        /* 기상청 API 정보 안내용 CSS */
         .api-info {
             text-align: center;
             font-size: 0.9rem;
@@ -88,23 +92,19 @@ def render_main_page():
     </style>
     """, unsafe_allow_html=True)
     
-    # 사이드바
     with st.sidebar:
-        st.markdown("### 기단(Air Mass)이란?")
+        st.markdown("### 📖 기단(Air Mass)이란?")
         st.info("기단은 수평 방향으로 기온·습도 등의 물리적 성질이 거의 균일한 대규모 공기 덩어리입니다. 발원지의 위도와 지표면 특성에 따라 분류됩니다.")
     
-    # 메인 타이틀
     st.markdown('<div class="main-title">한반도의 사계절 기단</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">슬라이더를 움직여 계절마다 어떤 기단이 한반도에 영향을 미치는가 탐구해 보세요!</div>', unsafe_allow_html=True)
     
-    # 🚨 [수정 4] 기상청 실제 API 출처 표기 (ASOS/AWS)
     st.markdown("""
         <div style="text-align: center;">
             <span class="api-info">📡 데이터 출처: 공공데이터포털 <b>기상청 종관기상관측(ASOS) 및 방재기상관측(AWS) API</b> 데이터 기반</span>
         </div>
     """, unsafe_allow_html=True)
     
-    # 🚨 [수정 2] "분석할 월을 선택하세요" 폰트 크기 축소 (H3 -> H5 급으로 조정)
     st.markdown("<h5 style='margin-bottom: 0px; margin-top: 1rem;'>📅 분석할 월을 선택하세요 (1월~12월)</h5>", unsafe_allow_html=True)
     month = st.slider(
         "월 선택",
@@ -119,13 +119,11 @@ def render_main_page():
     dominant = max(strengths, key=strengths.get)
     dom_info = AIRMASSES[dominant]
     
-    # 🚨 [수정 3] 현재 선택된 정보 텍스트에 컬러 적용
     st.markdown(f"<h4 style='color: #0284C7; font-weight: 800;'>🗓️ {month}월 ({season}) — 현재 가장 우세한 기단: {dom_info['emoji']} {dominant}</h4>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
     
     col_left, col_center, col_right = st.columns([0.9, 3.2, 1.3], gap="medium")
     
-    # [좌측] 기단 세력 그래프
     with col_left:
         with st.container(border=True):
             st.markdown('<div class="section-header">📊 기단 점유율</div>', unsafe_allow_html=True)
@@ -135,7 +133,6 @@ def render_main_page():
                 st.markdown(f"{info['emoji']} {name}")
                 st.progress(s, text=f"{pct}%")
     
-    # [중앙] Folium 지도 시각화
     with col_center:
         m = folium.Map(location=[36.3, 127.8], zoom_start=7, tiles="CartoDB positron", width="100%", height=530)
     
@@ -184,7 +181,6 @@ def render_main_page():
     
         st_folium(m, use_container_width=True, height=530, returned_objects=[])
     
-    # [우측] 우세 기단 상세분석
     with col_right:
         with st.container(border=True):
             st.markdown(f'<div class="section-header">{dom_info["emoji"]} {dominant} 기단 정보</div>', unsafe_allow_html=True)
@@ -195,7 +191,6 @@ def render_main_page():
     
     st.markdown("<br><hr>", unsafe_allow_html=True)
     
-    # 하단 차트 섹션
     st.markdown("### 📊 전국 기상 통계 및 기단 분석 그래프")
     
     col_chart1, col_chart2 = st.columns(2, gap="large")
@@ -236,12 +231,11 @@ def render_main_page():
     
     st.markdown("<br><hr>", unsafe_allow_html=True)
     
-    # 퀴즈 섹션
     st.markdown("### 🧠 기후 원리 퀴즈 타임!")
     with st.expander("💡 기단과 사계절에 대한 문제를 풀며 복습해보세요!", expanded=False):
         q_map = {
             1: ("겨울철 한반도에 매서운 한파와 삼한사온을 가져오는 기단은?", ["시베리아 기단","북태평양 기단","양쯔강 기단","오호츠크해 기단"], 0),
-            2: ("초여름 장마전선(정체전선)은 주로 어떤 두 기단이 힘겨루기를 하며 형성되나요?", ["시베리아+양쯔강","오호츠크해+북태평양","양쯔강+적도","시레리아+오호츠크해"], 1),
+            2: ("초여름 장마전선(정체전선)은 주로 어떤 두 기단이 힘겨루기를 하며 형성되나요?", ["시베리아+양쯔강","오호츠크해+북태평양","양쯔강+적도","시베리아+오호츠크해"], 1),
             3: ("봄과 가을철에 유독 하늘이 맑고 건조한 날씨를 선사하는 기단은?", ["북태평양 기단","오호츠크해 기단","양쯔강 기단","적도 기단"], 2),
             4: ("막대한 에너지를 품고 우리에게 다가오는 '태풍'은 어느 기단의 고향과 관련이 깊을까요?", ["시베리아 기단","양쯔강 기단","적도 기단","오호츠크해 기단"], 2),
             5: ("한여름 숨 막히는 무더위와 밤잠을 설치게 하는 열대야의 주범이 되는 기단은?", ["양쯔강 기단","시베리아 기단","오호츠크해 기단","북태평양 기단"], 3),
@@ -258,17 +252,25 @@ def render_main_page():
 
 
 # ==========================================
-# 라우팅 (Navigation) 세팅
+# 🚨 멀티페이지 네비게이션 완벽 설정 (파일 이름 정확히 매칭!)
 # ==========================================
-try:
-    # app.py 파일 경로를 직접 넣는 대신 위에서 정의한 함수를 통째로 전달합니다.
-    page_gidan = st.Page(render_main_page, title="한반도의 사계절 기단", icon="🌏", default=True)
-    page_haesumyeon = st.Page("pages/해수면.py", title="해수면 변화 분석", icon="🌊")
-    page_wiseong = st.Page("pages/위성영상.py", title="위성 영상 분석", icon="🛰️")
-    
-    pg = st.navigation([page_gidan, page_haesumyeon, page_wiseong])
-except Exception:
-    page_gidan = st.Page(render_main_page, title="한반도의 사계절 기단", icon="🌏", default=True)
-    pg = st.navigation([page_gidan])
+# 앱 실행 시 보여줄 페이지 목록을 담을 리스트입니다.
+navigation_pages = []
 
+# 1. 메인 페이지 추가 (항상 기본으로 뜸)
+page_main = st.Page(render_main_page, title="한반도의 사계절 기단", icon="🌏", default=True)
+navigation_pages.append(page_main)
+
+# 2. 캡처 사진에 있던 서브 페이지들을 확인하고 동적으로 추가합니다.
+if os.path.exists("pages/1_🌸_계절별_탐구.py"):
+    navigation_pages.append(st.Page("pages/1_🌸_계절별_탐구.py", title="계절별 탐구", icon="🌸"))
+
+if os.path.exists("pages/2_🌊_해양관측.py"):
+    navigation_pages.append(st.Page("pages/2_🌊_해양관측.py", title="해양관측", icon="🌊"))
+
+if os.path.exists("pages/3_🛰️_위성영상.py"):
+    navigation_pages.append(st.Page("pages/3_🛰️_위성영상.py", title="위성영상", icon="🛰️"))
+
+# 3. 네비게이션 실행!
+pg = st.navigation(navigation_pages)
 pg.run()
