@@ -17,10 +17,26 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# 2. 커스텀 CSS (아이콘 깨짐 현상 완벽 해결!)
+# 2. 📌 [해결 3] 멀티페이지 네비게이션 설정 (사이드바 메뉴 원상 복구)
+# 실제 파일명(예: pages/위성영상분석.py 등)에 맞게 경로를 맞춰주시면 정상 연결됩니다.
+try:
+    page_gidan = st.Page("app.py", title="한반도의 사계절 기단", icon="🌏", default=True)
+    page_haesumyeon = st.Page("pages/해수면.py", title="해수면 변화 분석", icon="🌊")
+    page_wiseong = st.Page("pages/위성영상.py", title="위성 영상 분석", icon="🛰️")
+    
+    pg = st.navigation([page_gidan, page_haesumyeon, page_wiseong])
+except Exception:
+    # 파일명 불일치로 에러 발생 시 앱이 멈추지 않도록 안전장치 리스트 구성
+    page_gidan = st.Page("app.py", title="한반도의 사계절 기단", icon="🌏", default=True)
+    pg = st.navigation([page_gidan])
+
+# 네비게이션 실행 (다른 메뉴 클릭 시 코드 제어권을 해당 파일로 넘겨줍니다)
+pg.run()
+
+
+# 3. 커스텀 CSS (사이드바 그라데이션 및 아주 미세한 배경색 유지)
 st.markdown("""
 <style>
-    /* 폰트: 나눔고딕 적용 (아이콘이 깨지지 않도록 * 선택자 제거) */
     @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
     
     html, body, [data-testid="stAppViewContainer"], .stApp, p, h1, h2, h3, h4, h5, h6, li, span {
@@ -77,32 +93,25 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. 사이드바 내용 구성 (빈약한 사이드바에 가이드 추가)
-with st.sidebar:
-    st.markdown("### 🧭 대시보드 사용 가이드")
-    st.markdown("""
-    1. **월 선택기(Slider)**를 움직여 원하는 계절을 맞춥니다.
-    2. 화면 중앙의 **지도**에서 기단의 발원지와 한반도로 불어오는 방향을 확인하세요.
-    3. 우측의 **기단 정보**를 통해 해당 기단의 특징을 학습할 수 있습니다.
-    """)
-    
-    st.markdown("---")
-    
-    st.markdown("### 📖 기단(Air Mass)이란?")
-    st.info("**기단(氣團)**은 수평 방향으로 기온·습도 등의 물리적 성질이 거의 균일한 대규모 공기 덩어리입니다. 발원지의 위도와 지표면 특성에 따라 분류됩니다.")
 
-# 4. 메인 대시보드 상단 헤더
+# 4. 📌 [해결 1, 2] 사이드바 내용 기입 (사용가이드 삭제, 볼드체 제거)
+with st.sidebar:
+    st.markdown("### 기단(Air Mass)이란?")
+    st.info("기단은 수평 방향으로 기온·습도 등의 물리적 성질이 거의 균일한 대규모 공기 덩어리입니다. 발원지의 위도와 지표면 특성에 따라 분류됩니다.")
+
+
+# 5. 메인 대시보드 상단 헤더
 st.markdown('<div class="main-title">한반도의 사계절 기단</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">슬라이더를 움직여 계절마다 어떤 기단이 한반도에 영향을 미치는가 탐구해 보세요!</div>', unsafe_allow_html=True)
 
-# 5. 📌 [수정] 메인 컨트롤러 슬라이더 (제목 글씨 크게 키우기)
-# 슬라이더 기본 라벨을 숨기고 마크다운으로 큰 제목을 얹습니다.
+
+# 6. 메인 컨트롤러 슬라이더 (폰트 크기 유지)
 st.markdown("### 📅 분석할 월을 선택하세요 (1월~12월)")
 month = st.slider(
-    "월 선택 (숨김 처리됨)",
+    "월 선택",
     min_value=1, max_value=12, value=1,
     format="%d월",
-    label_visibility="collapsed" # 기본 제목을 숨겨서 깔끔하게 만듦
+    label_visibility="collapsed"
 )
 
 # 데이터 바인딩
@@ -112,10 +121,11 @@ station_df = get_sample_station_data(month)
 dominant = max(strengths, key=strengths.get)
 dom_info = AIRMASSES[dominant]
 
-st.markdown(f"#### 🗓️ {month}월 ({season}) — 현재 가장 우세한 기단: {dom_info['emoji']} **{dominant}**")
+st.markdown(f"#### 🗓️ {month}월 ({season}) — 현재 가장 우세한 기단: {dom_info['emoji']} {dominant}")
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 6. 대시보드 3단 레이아웃 (그래프 축소, 지도 확대)
+
+# 7. 대시보드 3단 레이아웃 (너비 조정 완료)
 col_left, col_center, col_right = st.columns([0.9, 3.2, 1.3], gap="medium")
 
 # [좌측] 기단 세력 그래프
@@ -125,10 +135,10 @@ with col_left:
         for name, s in sorted(strengths.items(), key=lambda x: -x[1]):
             info = AIRMASSES[name]
             pct = int(s * 100)
-            st.markdown(f"{info['emoji']} **{name}**")
+            st.markdown(f"{info['emoji']} {name}")
             st.progress(s, text=f"{pct}%")
 
-# [중앙] Folium 지도 시각화
+# [중앙] Folium 지도 시각화 (확장형 너비)
 with col_center:
     m = folium.Map(location=[36.3, 127.8], zoom_start=7, tiles="CartoDB positron", width="100%", height=530)
 
@@ -177,18 +187,19 @@ with col_center:
 
     st_folium(m, use_container_width=True, height=530, returned_objects=[])
 
-# [우측] 우세 기단 상세분석
+# [우측] 우세 기단 상세분석 (볼드 표기 제거)
 with col_right:
     with st.container(border=True):
         st.markdown(f'<div class="section-header">{dom_info["emoji"]} {dominant} 기단 정보</div>', unsafe_allow_html=True)
         st.info(dom_info["desc_detail"])
-        st.markdown(f"🧬 **기단의 성질:** {dom_info['property']}")
-        st.markdown(f"🗂️ **지리적 분류:** {dom_info['type']}")
-        st.markdown(f"🧭 **대표적인 바람:** {dom_info['wind_dir']}풍")
+        st.markdown(f"🧬 기단의 성질: {dom_info['property']}")
+        st.markdown(f"🗂️ 지리적 분류: {dom_info['type']}")
+        st.markdown(f"🧭 대표적인 바람: {dom_info['wind_dir']}풍")
 
 st.markdown("<br><hr>", unsafe_allow_html=True)
 
-# 7. 하단 차트 섹션
+
+# 8. 하단 차트 섹션
 st.markdown("### 📊 전국 기상 통계 및 기단 분석 그래프")
 
 col_chart1, col_chart2 = st.columns(2, gap="large")
@@ -229,22 +240,23 @@ with col_chart2:
 
 st.markdown("<br><hr>", unsafe_allow_html=True)
 
-# 8. 퀴즈 섹션
+
+# 9. 퀴즈 섹션 (볼드 표기 제거)
 st.markdown("### 🧠 기후 원리 퀴즈 타임!")
 with st.expander("💡 기단과 사계절에 대한 문제를 풀며 복습해보세요!", expanded=False):
     q_map = {
         1: ("겨울철 한반도에 매서운 한파와 삼한사온을 가져오는 기단은?", ["시베리아 기단","북태평양 기단","양쯔강 기단","오호츠크해 기단"], 0),
-        2: ("초여름 장마전선(정체전선)은 주로 어떤 두 기단이 힘겨루기를 하며 형성되나요?", ["시베리아+양쯔강","오호츠크해+북태평양","양쯔강+적도","시베리아+오호츠크해"], 1),
+        2: ("초여름 장마전선(정체전선)은 주로 어떤 두 기단이 힘겨루기를 하며 형성되나요?", ["시베리아+양쯔강","오호츠크해+북태평양","양쯔강+적도","시레리아+오호츠크해"], 1),
         3: ("봄과 가을철에 유독 하늘이 맑고 건조한 날씨를 선사하는 기단은?", ["북태평양 기단","오호츠크해 기단","양쯔강 기단","적도 기단"], 2),
         4: ("막대한 에너지를 품고 우리에게 다가오는 '태풍'은 어느 기단의 고향과 관련이 깊을까요?", ["시베리아 기단","양쯔강 기단","적도 기단","오호츠크해 기단"], 2),
         5: ("한여름 숨 막히는 무더위와 밤잠을 설치게 하는 열대야의 주범이 되는 기단은?", ["양쯔강 기단","시베리아 기단","오호츠크해 기단","북태평양 기단"], 3),
     }
     for qnum, (q, opts, ans) in q_map.items():
-        st.markdown(f"**Q{qnum}. {q}**")
+        st.markdown(f"Q{qnum}. {q}")
         sel = st.radio("", opts, key=f"q{qnum}", index=None, label_visibility="collapsed")
         if sel:
             if opts.index(sel) == ans:
                 st.success("🎉 완벽해요! 정답입니다.")
             else:
-                st.error(f"아쉬워요! 정답은 **{opts[ans]}**입니다.")
+                st.error(f"아쉬워요! 정답은 {opts[ans]}입니다.")
         st.markdown("<div style='margin-bottom:1.5rem;'></div>", unsafe_allow_html=True)
