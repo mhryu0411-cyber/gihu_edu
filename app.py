@@ -9,30 +9,34 @@ from utils.sample_data import (
     get_sample_station_data, SEASON_NAMES,
 )
 
-# 1. 페이지 설정
-st.set_page_config(
-    page_title="한반도의 사계절 기단",
-    page_icon="🌏",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+# 1. 페이지 및 멀티페이지 네비게이션 설정 (★ 메뉴 실종 버그 완벽 해결 영역 ★)
+# 원래 사용하시던 다른 페이지(해수면, 구름 등)의 정확한 파일명을 아래 'pages/파일명.py' 자리에 적어주세요.
+pages = {
+    "기후 탐구 대시보드": [
+        st.Page(__file__, title="한반도의 사계절 기단", icon="🌏"), # 현재 이 페이지의 이름을 변경
+        st.Page("pages/해수면.py", title="해수면 변화 분석", icon="🌊"), # 예시 (실제 파일명으로 수정)
+        st.Page("pages/구름.py", title="구름 및 강수량", icon="☁️"),   # 예시 (실제 파일명으로 수정)
+    ]
+}
+pg = st.navigation(pages)
+pg.run()
 
-# 2. 나눔고딕 반영 및 사이드바 그라데이션 커스텀 CSS
+# 2. 나눔고딕 반영 및 상단바 제거 커스텀 CSS
 st.markdown("""
 <style>
-    /* 폰트: 나눔고딕 구글 웹폰트 로드 및 전체 강제 적용 */
+    /* 폰트: 나눔고딕 전체 강제 적용 */
     @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
     
     html, body, [data-testid="stAppViewContainer"], .stApp, * {
         font-family: 'Nanum Gothic', sans-serif !important;
     }
     
-    /* [수정사항 1] 상단 기본 헤더(깃허브 로고, 메뉴, Deploy 버튼 등) 완전히 숨기기 */
+    /* 상단 기본 헤더(깃허브 로고, 메뉴 등) 완전히 숨기기 */
     [data-testid="stHeader"] {
         display: none !important;
     }
     
-    /* 메인 타이틀 세련되게 다듬기 */
+    /* 메인 타이틀 디자인 */
     .main-title {
         text-align: center;
         font-size: 2.6rem;
@@ -41,7 +45,7 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 0.3rem;
-        margin-top: 1rem; /* 상단바 숨김으로 인한 여백 확보 */
+        margin-top: 1rem;
         letter-spacing: -0.03em;
     }
     .sub-title {
@@ -54,15 +58,6 @@ st.markdown("""
     /* 사이드바 은은하고 부드러운 그라데이션 적용 */
     [data-testid="stSidebar"], [data-testid="stSidebarContent"] {
         background: linear-gradient(180deg, #EDF2F7 0%, #F7FAFC 100%) !important;
-    }
-    
-    /* 사이드바 타이틀 정의 */
-    .sidebar-brand-title {
-        font-size: 1.3rem;
-        font-weight: 800;
-        color: #1E293B;
-        margin-bottom: 1rem;
-        padding-top: 0.5rem;
     }
     
     /* 카드형 컨테이너 보더 및 섀도우 마감 */
@@ -86,18 +81,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. 사이드바 내용 구성 (그라데이션 내부 영역)
+# 3. 사이드바 내용 구성 (쉬운 설명 모드 토글 완전 삭제)
 with st.sidebar:
-    # [수정사항 2 반영] 커스텀 사이드바 타이틀 텍스트 변경
-    st.markdown('<div class="sidebar-brand-title">🌏 한반도의 사계절 기단</div>', unsafe_allow_html=True)
-    easy_mode = st.toggle("😊 쉬운 설명 모드", value=True)
-    st.markdown("---")
-    
     st.markdown("### 📖 기단(Air Mass)이란?")
-    if easy_mode:
-        st.info("**기단**은 넓은 지역에 걸쳐 비슷한 온도와 습도를 가진 커다란 공기 덩어리예요! 계절마다 다른 기단이 한반도로 찾아와서 날씨가 바뀐답니다. 🌈")
-    else:
-        st.info("**기단(氣團)**은 수평 방향으로 기온·습도 등의 물리적 성질이 거의 균일한 대규모 공기 덩어리입니다. 발원지의 위도와 지표면 특성에 따라 분류됩니다.")
+    # 기본적으로 상세한 설명(상세 모드)만 나오도록 고정
+    st.info("**기단(氣團)**은 수평 방향으로 기온·습도 등의 물리적 성질이 거의 균일한 대규모 공기 덩어리입니다. 발원지의 위도와 지표면 특성에 따라 분류됩니다.")
 
 # 4. 메인 대시보드 상단 헤더
 st.markdown('<div class="main-title">한반도의 사계절 기단</div>', unsafe_allow_html=True)
@@ -184,13 +172,13 @@ with col_center:
 
     st_folium(m, use_container_width=True, height=530, returned_objects=[])
 
-# [우측] 우세 기단 상세분석 (버그 해결 영역)
+# [우측] 우세 기단 상세분석
 with col_right:
     with st.container(border=True):
         st.markdown(f'<div class="section-header">{dom_info["emoji"]} {dominant} 기단 정보</div>', unsafe_allow_html=True)
         
-        desc = dom_info["desc_easy"] if easy_mode else dom_info["desc_detail"]
-        st.info(desc)
+        # 상세 모드 설명문으로 고정 적용
+        st.info(dom_info["desc_detail"])
         
         st.markdown(f"🧬 **기단의 성질:** {dom_info['property']}")
         st.markdown(f"🗂️ **지리적 분류:** {dom_info['type']}")
