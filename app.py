@@ -31,11 +31,6 @@ st.markdown("""
     [data-testid="stHeader"] {
         display: none !important;
     }
-
-    /* [수정사항 2] 기본 사이드바 네비게이션(app 파일명 표시 영역) 숨기기 */
-    [data-testid="stSidebarNav"] {
-        display: none !important;
-    }
     
     /* 메인 타이틀 세련되게 다듬기 */
     .main-title {
