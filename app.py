@@ -9,7 +9,7 @@ from utils.sample_data import (
     get_sample_station_data, SEASON_NAMES,
 )
 
-# 1. 페이지 설정 (이 코드가 최상단에 있어야 안전합니다)
+# 1. 페이지 설정 (최상단 고정)
 st.set_page_config(
     page_title="한반도의 사계절 기단",
     page_icon="🌏",
@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# 2. 나눔고딕 반영 및 상단바 제거 커스텀 CSS
+# 2. 커스텀 CSS (사이드바 복구 + 그라데이션 + 디자인)
 st.markdown("""
 <style>
     /* 폰트: 나눔고딕 전체 강제 적용 */
@@ -27,9 +27,19 @@ st.markdown("""
         font-family: 'Nanum Gothic', sans-serif !important;
     }
     
-    /* 상단 기본 헤더(깃허브 로고, 메뉴 등) 완전히 숨기기 */
+    /* 상단 기본 헤더(깃허브 로고 등)만 완전히 숨기기 */
     [data-testid="stHeader"] {
         display: none !important;
+    }
+
+    /* 📌 [해결 1] 사라진 사이드바 메뉴 무조건 다시 보이게 만들기 */
+    [data-testid="stSidebarNav"] {
+        display: block !important; 
+    }
+    
+    /* 📌 [해결 2] 사이드바에 고급스러운 그라데이션 배경 완벽 적용 */
+    [data-testid="stSidebar"], [data-testid="stSidebarContent"] {
+        background: linear-gradient(180deg, #EBF4FF 0%, #F3F4F6 100%) !important;
     }
     
     /* 메인 타이틀 디자인 */
@@ -51,11 +61,6 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     
-    /* 사이드바 은은하고 부드러운 그라데이션 적용 */
-    [data-testid="stSidebar"], [data-testid="stSidebarContent"] {
-        background: linear-gradient(180deg, #EDF2F7 0%, #F7FAFC 100%) !important;
-    }
-    
     /* 카드형 컨테이너 보더 및 섀도우 마감 */
     div[data-testid="stContainer"] {
         border-radius: 14px !important;
@@ -67,7 +72,7 @@ st.markdown("""
     
     /* 섹션 헤더 좌측 바 포인트 */
     .section-header {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 700;
         color: #1E293B;
         margin-bottom: 1rem;
@@ -77,7 +82,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. 사이드바 내용 구성 (쉬운 설명 모드 완전 삭제)
+# 3. 사이드바 내용 구성 (그라데이션 위에 얹어질 내용)
 with st.sidebar:
     st.markdown("### 📖 기단(Air Mass)이란?")
     st.info("**기단(氣團)**은 수평 방향으로 기온·습도 등의 물리적 성질이 거의 균일한 대규모 공기 덩어리입니다. 발원지의 위도와 지표면 특성에 따라 분류됩니다.")
@@ -103,20 +108,20 @@ dom_info = AIRMASSES[dominant]
 st.markdown(f"### 🗓️ {month}월 ({season}) — 현재 가장 우세한 기단: {dom_info['emoji']} **{dominant}**")
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 6. 대시보드 3단 레이아웃
-col_left, col_center, col_right = st.columns([1.3, 2.4, 1.3], gap="medium")
+# 6. 📌 [해결 3] 대시보드 3단 레이아웃 너비 전면 조정 (그래프 줄이고, 지도 대폭 확장)
+col_left, col_center, col_right = st.columns([0.9, 3.2, 1.3], gap="medium")
 
-# [좌측] 기단 세력 그래프
+# [좌측] 기단 세력 그래프 (너비 축소됨)
 with col_left:
     with st.container(border=True):
-        st.markdown('<div class="section-header">📊 기단별 영향력 점유율</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">📊 기단 점유율</div>', unsafe_allow_html=True)
         for name, s in sorted(strengths.items(), key=lambda x: -x[1]):
             info = AIRMASSES[name]
             pct = int(s * 100)
             st.markdown(f"{info['emoji']} **{name}**")
             st.progress(s, text=f"{pct}%")
 
-# [중앙] Folium 지도 시각화
+# [중앙] Folium 지도 시각화 (너비 대폭 확장됨)
 with col_center:
     m = folium.Map(location=[36.3, 127.8], zoom_start=7, tiles="CartoDB positron", width="100%", height=530)
 
@@ -172,7 +177,6 @@ with col_right:
     with st.container(border=True):
         st.markdown(f'<div class="section-header">{dom_info["emoji"]} {dominant} 기단 정보</div>', unsafe_allow_html=True)
         
-        # 상세 모드 설명문으로 고정 적용
         st.info(dom_info["desc_detail"])
         
         st.markdown(f"🧬 **기단의 성질:** {dom_info['property']}")
