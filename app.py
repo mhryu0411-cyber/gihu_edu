@@ -9,7 +9,7 @@ from utils.sample_data import (
     get_sample_station_data, SEASON_NAMES,
 )
 
-# 1. 페이지 기본 설정 (전역 최초 1회 선언)
+# 1. 페이지 기본 설정 (최상단 배치)
 st.set_page_config(
     page_title="한반도의 사계절과 기단",
     page_icon="🌏",
@@ -17,9 +17,14 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# 2. 메인 대시보드 화면 정의 (함수로 묶어서 내비게이션에 바인딩)
+# ==========================================
+# 각 서브 페이지용 플레이스홀더 함수 정의
+# (경로 오류를 방지하기 위해 파일 대신 함수를 직접 내비게이션에 바인딩합니다)
+# ==========================================
+
+# [메인 화면] 🌏 한반도의 사계절과 기단
 def main_dashboard():
-    # [디자인 마감] 나눔고딕 폰트 적용, 우측 상단바 제거, 은은한 사이드바 그라데이션 CSS
+    # 상단 배포바 제거 및 나눔고딕 폰트 적용 CSS
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
@@ -189,28 +194,49 @@ def main_dashboard():
             st.markdown("<div style='margin-bottom:1.5rem;'></div>", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.caption("🌏 한반도의 사계절과 기단 시각화 시뮬레이터 | Designed for Premium UI | 나눔고딕 폰트 적용 완료")
+    st.caption("🌏 한반도의 사계절과 기단 시각화 시뮬레이터 | Designed for Premium UI")
+
+# [서브 페이지 1] 📊 계절별 탐구
+def page_seasonal_exploration():
+    st.title("📊 계절별 탐구")
+    st.write("봄, 여름, 가을, 겨울의 상세 기후 패턴 데이터를 탑구하는 공간입니다.")
+
+# [서브 페이지 2] 🗺️ 실시간 관측지도
+def page_realtime_map():
+    st.title("🗺️ 실시간 관측지도")
+    st.write("전국 AWS 기상 관측소의 실시간 데이터를 지도 위에서 확인합니다.")
+
+# [서브 페이지 3] 🌊 해양·고층 탐구
+def page_ocean_upper():
+    st.title("🌊 해양·고층 탐구")
+    st.write("해양성 기단의 발원지 온도 분석 및 고층 기온 변화 단면도를 제공합니다.")
+
+# [서브 페이지 4] 🌀 태풍 추적기
+def page_typhoon_tracker():
+    st.title("🌀 태풍 추적기")
+    st.write("적도 기단에서 생성되어 한반도로 북상하는 태풍의 실시간 이동 경로를 시뮬레이션합니다.")
+
+# [서브 페이지 5] 📈 기후변화 트렌드
+def page_climate_trend():
+    st.title("📈 기후변화 트렌드")
+    st.write("지난 30년간의 평년 데이터 분석을 통해 한반도의 여름이 길어지는 트렌드를 확인합니다.")
 
 
 # ==========================================
-# 🚨 [핵심 수정] 멀티페이지 명칭 제어 시스템 명시적 정의
+# 🚨 [구조 전면 혁신] "app" 중복 표기를 막고 경로 버그를 방지하는 내비게이션 맵핑
 # ==========================================
 
-# 1) 메인 화면 선언 (여기서 title을 "한반도의 사계절과 기단"으로 맵핑하여 "app"을 완전히 대체합니다)
-main_page = st.Page(
-    main_dashboard, 
-    title="한반도의 사계절과 기단", 
-    icon="🌏", 
-    default=True
-)
+# 명시적인 단일 딕셔너리 구조를 사용하여 사이드바 최상단 타이틀을 단 하나로 통제합니다.
+pg = st.navigation({
+    "🌏 한반도의 사계절과 기단": [
+        st.Page(main_dashboard, title="대시보드 메인", icon="🏠", default=True),
+        st.Page(page_seasonal_exploration, title="계절별 탐구", icon="📊"),
+        st.Page(page_realtime_map, title="실시간 관측지도", icon="🗺️"),
+        st.Page(page_ocean_upper, title="해양·고층 탐구", icon="🌊"),
+        st.Page(page_typhoon_tracker, title="태풍 추적기", icon="🌀"),
+        st.Page(page_climate_trend, title="기후변화 트렌드", icon="📈")
+    ]
+})
 
-# 2) 기획서 파일 구조에 따른 서브 페이지 경로 지정 및 메뉴 이름 매핑
-page1 = st.Page("pages/1_계절별_탐구.py", title="계절별 탐구", icon="📊")
-page2 = st.Page("pages/2_실시간_관측지도.py", title="실시간 관측지도", icon="🗺️")
-page3 = st.Page("pages/3_해양_고층_탐구.py", title="해양·고층 탐구", icon="🌊")
-page4 = st.Page("pages/4_태풍_추적기.py", title="태풍 추적기", icon="🌀")
-page5 = st.Page("pages/5_기후변화_트렌드.py", title="기후변화 트렌드", icon="📈")
-
-# 3) 내비게이션 실행 (사이드바 최상단에 세련된 리스트 형식으로 자동 정렬됩니다)
-pg = st.navigation([main_page, page1, page2, page3, page4, page5])
+# 앱 실행
 pg.run()
