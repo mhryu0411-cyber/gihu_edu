@@ -26,6 +26,10 @@ st.markdown("""
     html, body, [data-testid="stAppViewContainer"], .stApp, * {
         font-family: 'Nanum Gothic', sans-serif !important;
     }
+
+    [data-testid="stHeader"] {
+        display: none !important;
+    }
     
     /* 메인 타이틀 세련되게 다듬기 */
     .main-title {
