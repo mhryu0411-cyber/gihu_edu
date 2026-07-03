@@ -9,7 +9,7 @@ from utils.sample_data import (
     get_sample_station_data, SEASON_NAMES,
 )
 
-# 1. 페이지 설정 (최상단 고정, 사이드바 처음부터 열려있도록 강제)
+# 1. 페이지 설정 (최상단 고정)
 st.set_page_config(
     page_title="한반도의 사계절 기단",
     page_icon="🌏",
@@ -17,22 +17,22 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# 2. 커스텀 CSS (사이드바 버튼이 사라지는 원인인 '숨김(display:none)' 코드 완전 삭제!)
+# 2. 커스텀 CSS (아이콘 깨짐 현상 완벽 해결!)
 st.markdown("""
 <style>
-    /* 폰트: 나눔고딕 전체 강제 적용 */
+    /* 폰트: 나눔고딕 적용 (아이콘이 깨지지 않도록 * 선택자 제거) */
     @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
     
-    html, body, [data-testid="stAppViewContainer"], .stApp, * {
-        font-family: 'Nanum Gothic', sans-serif !important;
+    html, body, [data-testid="stAppViewContainer"], .stApp, p, h1, h2, h3, h4, h5, h6, li, span {
+        font-family: 'Nanum Gothic', sans-serif;
     }
     
-    /* 📌 [요청 2] 메인 배경색을 완전 흰색이 아닌 아주 미세한 색상(#F8FAFC)으로 변경 */
+    /* 메인 배경색을 아주 미세한 색상(#F8FAFC)으로 변경 */
     [data-testid="stAppViewContainer"], .stApp {
         background-color: #F8FAFC !important;
     }
 
-    /* 📌 [요청 3] 사이드바 그라데이션 배경 적용 */
+    /* 사이드바 그라데이션 배경 적용 */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #EAEFFF 0%, #F3F4F6 100%) !important;
     }
@@ -56,7 +56,7 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     
-    /* 카드형 컨테이너 보더 및 섀도우 마감 (카드는 완전 흰색 유지하여 대비감 주기) */
+    /* 카드형 컨테이너 보더 및 섀도우 마감 */
     div[data-testid="stContainer"] {
         border-radius: 14px !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
@@ -77,8 +77,17 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. 사이드바 내용 구성
+# 3. 사이드바 내용 구성 (빈약한 사이드바에 가이드 추가)
 with st.sidebar:
+    st.markdown("### 🧭 대시보드 사용 가이드")
+    st.markdown("""
+    1. **월 선택기(Slider)**를 움직여 원하는 계절을 맞춥니다.
+    2. 화면 중앙의 **지도**에서 기단의 발원지와 한반도로 불어오는 방향을 확인하세요.
+    3. 우측의 **기단 정보**를 통해 해당 기단의 특징을 학습할 수 있습니다.
+    """)
+    
+    st.markdown("---")
+    
     st.markdown("### 📖 기단(Air Mass)이란?")
     st.info("**기단(氣團)**은 수평 방향으로 기온·습도 등의 물리적 성질이 거의 균일한 대규모 공기 덩어리입니다. 발원지의 위도와 지표면 특성에 따라 분류됩니다.")
 
@@ -86,11 +95,14 @@ with st.sidebar:
 st.markdown('<div class="main-title">한반도의 사계절 기단</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">슬라이더를 움직여 계절마다 어떤 기단이 한반도에 영향을 미치는가 탐구해 보세요!</div>', unsafe_allow_html=True)
 
-# 5. 메인 컨트롤러 슬라이더
+# 5. 📌 [수정] 메인 컨트롤러 슬라이더 (제목 글씨 크게 키우기)
+# 슬라이더 기본 라벨을 숨기고 마크다운으로 큰 제목을 얹습니다.
+st.markdown("### 📅 분석할 월을 선택하세요 (1월~12월)")
 month = st.slider(
-    "📅 분석할 월을 선택하세요 (1월~12월)",
+    "월 선택 (숨김 처리됨)",
     min_value=1, max_value=12, value=1,
-    format="%d월"
+    format="%d월",
+    label_visibility="collapsed" # 기본 제목을 숨겨서 깔끔하게 만듦
 )
 
 # 데이터 바인딩
@@ -100,10 +112,10 @@ station_df = get_sample_station_data(month)
 dominant = max(strengths, key=strengths.get)
 dom_info = AIRMASSES[dominant]
 
-st.markdown(f"### 🗓️ {month}월 ({season}) — 현재 가장 우세한 기단: {dom_info['emoji']} **{dominant}**")
+st.markdown(f"#### 🗓️ {month}월 ({season}) — 현재 가장 우세한 기단: {dom_info['emoji']} **{dominant}**")
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 6. 대시보드 3단 레이아웃 (그래프 축소, 지도 확대 유지)
+# 6. 대시보드 3단 레이아웃 (그래프 축소, 지도 확대)
 col_left, col_center, col_right = st.columns([0.9, 3.2, 1.3], gap="medium")
 
 # [좌측] 기단 세력 그래프
